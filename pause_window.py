@@ -78,7 +78,7 @@ def makeProcessDPIAware():
 
 
 def main():
-    """Main function to run the pause window as a subprocess from other scripts."""
+    """Main function to run the pause window as a function from other scripts."""
     window: tk.Tk
     makeProcessDPIAware()
     window = PauseWindow()
