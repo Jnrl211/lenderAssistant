@@ -19,34 +19,34 @@ class PauseWindow(tk.Tk):
 
     class PauseWindowFrame(ttk.Frame):
 
-        outerFrame: ttk.Frame  # Draws an inner contour along the border of the window
-        innerFrame: ttk.Frame  # Groups widgets and adds vertical padding around and between them
-        messageLabel: ttk.Label
+        outer_frame: ttk.Frame  # Draws an inner contour along the border of the window
+        inner_frame: ttk.Frame  # Groups widgets and adds vertical padding around and between them
+        message_label: ttk.Label
         spacer: ttk.Frame
-        continueButton: ttk.Button
+        continue_button: ttk.Button
 
         def __init__(self, master: tk.Tk):
             super().__init__(master=master)
 
-        def addWidgets(self, labelText: str, buttonText: str):
-            self.outerFrame = ttk.Frame(master=self, borderwidth=2, relief="groove")
-            self.outerFrame.pack(padx=8, pady=8)
-            self.innerFrame = ttk.Frame(master=self.outerFrame)
-            self.innerFrame.pack(side="top", padx=96, pady=48)
-            self.messageLabel = ttk.Label(master=self.innerFrame, text=labelText)
-            self.messageLabel.pack(side="top")
-            self.spacer = ttk.Frame(master=self.innerFrame, height=8)
+        def add_widgets(self, label_text: str, button_text: str):
+            self.outer_frame = ttk.Frame(master=self, borderwidth=2, relief="groove")
+            self.outer_frame.pack(padx=8, pady=8)
+            self.inner_frame = ttk.Frame(master=self.outer_frame)
+            self.inner_frame.pack(side="top", padx=96, pady=48)
+            self.message_label = ttk.Label(master=self.inner_frame, text=label_text)
+            self.message_label.pack(side="top")
+            self.spacer = ttk.Frame(master=self.inner_frame, height=8)
             self.spacer.pack(side="top")
-            self.continueButton = ttk.Button(master=self.innerFrame, text=buttonText, command=self.master.destroy)  # To close the Tk window, not just the Frame
-            self.continueButton.pack(side="top", ipadx=16, ipady=4)
+            self.continue_button = ttk.Button(master=self.inner_frame, text=button_text, command=self.master.destroy)  # To close the Tk window, not just the Frame
+            self.continue_button.pack(side="top", ipadx=16, ipady=4)
 
     frame: PauseWindowFrame | None = None
 
     def __init__(
         self,
         title: str = "Pause",
-        labelText: str = "An action is required to continue.",
-        buttonText: str = "Continue",
+        label_text: str = "An action is required to continue.",
+        button_text: str = "Continue",
         **kwargs
     ):
         super().__init__(**kwargs)  # **kwargs is an unpacked dictionary containing the default keyword arguments of the tk.Tk parent class
@@ -54,15 +54,15 @@ class PauseWindow(tk.Tk):
         # self.protocol(name="", func=self.myCustomFunction)  # TODO: to be defined, or removed
         self.resizable(width=False, height=False)    # Required because "pack" layouts do not resize or reposition widgets
         self.title(string=title)
-        self.addWidgets(labelText=labelText, buttonText=buttonText)
+        self.add_widgets(label_text=label_text, button_text=button_text)
 
-    def addWidgets(self, labelText: str, buttonText: str):
+    def add_widgets(self, label_text: str, button_text: str):
         self.frame = self.PauseWindowFrame(master=self)
         self.frame.pack()
-        self.frame.addWidgets(labelText=labelText, buttonText=buttonText)
+        self.frame.add_widgets(label_text=label_text, button_text=button_text)
 
 
-def makeProcessDPIAware():
+def make_process_dpi_aware():
     """Makes the process DPI aware to remove Tkinter window blurriness on Windows display configurations with scale factors different to 100%.
     
     Even though type and autocomplete hints for runtime dynamic loaders (like ctypes.windll) are unavailable, this works as intended.
@@ -80,7 +80,7 @@ def makeProcessDPIAware():
 def main():
     """Main function to run the pause window as a function from other scripts."""
     window: tk.Tk
-    makeProcessDPIAware()
+    make_process_dpi_aware()
     window = PauseWindow()
     window.mainloop()
     return window
