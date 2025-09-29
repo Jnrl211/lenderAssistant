@@ -75,7 +75,7 @@ class Requisition():
 
 
 # TODO: keep adding members as they appear in more requisitions over time. Most I've seen at the moment are "Profesional", but there may be more for other education levels.
-class Education(Enum):
+class Education(IntEnum):
     """Education levels enumeration, used for ordering, categorization and comparison in `DetailedRequisition`.
     
     Normalize collected education level strings to uppercase to create their corresponding `Education` member appropriately.
@@ -83,7 +83,7 @@ class Education(Enum):
     Parse empty or undefined field as `UNKNOWN`.
     """
 
-    UNKNOWN = ""
+    UNKNOWN = 0
     TECHNICIAN = auto()  # Labeled "Técnico".
     PROFESIONAL = auto()  # Labeled "Profesional".
     MASTERS = auto()  # Labeled "Maestría".
