@@ -35,6 +35,23 @@ class Grade(IntEnum):
     C7 = auto()
 
 
+class Destination(Enum):
+    """Requisition destination enumeration.
+
+    Indicates the alleged destination of the loan requisition, according to the requisitioner. 
+    
+    For subjective evaluation and filtering.
+    """
+
+    FAMILY = "Familiar"
+    PAY_DEBTS = "Pagar Deudas"
+    CAR = "Automóvil"
+    BUSINESS = "Negocio"
+    EDUCATION = "Educación"
+    HOUSING = "Vivienda"
+    PERSONAL_EXPENSES = "Gastos Personales"
+
+
 class Requisition():
     """A `Requisition` contains basic information about a requisition, collected from the requisition list page."""
 
@@ -43,7 +60,7 @@ class Requisition():
     grade: Grade
     interest_rate: float  # Stored as percentage value (not decimal form).
     score: int
-    destination: str
+    destination: Destination
     term: int  # Loan term in months.
     amount: float  # Requisition amount in MXN.
     remaining_funding_amount: float  # Last seen remaining funding amount in MXN.
@@ -56,7 +73,7 @@ class Requisition():
         grade: Grade,
         interest_rate: float,
         score: int,
-        destination: str,
+        destination: Destination,
         term: int,
         amount: float,
         remaining_funding_amount: float,
