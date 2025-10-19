@@ -261,7 +261,7 @@ class DetailedRequisition(Requisition):
         self.tenure = tenure
         self.occupation_type = occupation_type
 
-    def meets_filter(self, filter: Filter | DetailedFilter):
+    def meets_filter(self, filter: Filter | DetailedFilter) -> bool:
         """Applies a `Filter` or `DetailedFilter` to a `DetailedRequisition` and returns whether the requisition meets the filter's criteria.
 
         Tests filter criteria one by one and stops at the first unmet criterion. Returns `True` if all filter criteria are met; returns `False` otherwise.
