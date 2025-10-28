@@ -40,6 +40,7 @@ class Grade(IntEnum):
     C7 = auto()
 
 
+# TODO: some Destination values show different labels in the requisition list and in the detailed requisition view. Requisition list labels are used here.
 class Destination(Enum):
     """Requisition destination enumeration.
 
@@ -48,7 +49,7 @@ class Destination(Enum):
     For subjective evaluation and filtering.
     """
 
-    FAMILY = "Familiar"
+    FAMILY = "Gastos Familiares"  # Alternative label in web app filter buttons: "Familiar"
     PAY_DEBTS = "Pagar Deudas"
     CAR = "Automóvil"
     BUSINESS = "Negocio"
@@ -169,7 +170,6 @@ class Education(IntEnum):
     PHD = auto()  # Labeled "Doctorado".
 
 
-# TODO: keep adding members as they appear in more requisitions over time.
 class Housing(Enum):
     """Type of housing of the requisitioner. 
 
@@ -443,12 +443,18 @@ class Filter():
             data = safe_load(yaml_file)
         for filter in data["filters"]:
             # Whitelists and blacklists must be processed to convert values to Enum instances to make them compatible with the __init__ constructor. Uses list comprehension.
+            # `IntEnum` filter parameters also must be parsed here because they are expected to be defined as `str` Enum names in the config.yml file.
             processed_filter: Any = filter.copy()  # Creates a working copy because the filter iterator is read-only.
-            if "destination_whitelist" in processed_filter and processed_filter["destination_whitelist"] is not None:
+            discarded_parameters: list[str] = []
+            if "minimum_risk_grade" in processed_filter:
+                processed_filter["minimum_risk_grade"] = Grade[processed_filter["minimum_risk_grade"]]
+            if "maximum_risk_grade" in processed_filter:
+                processed_filter["maximum_risk_grade"] = Grade[processed_filter["maximum_risk_grade"]]
+            if "destination_whitelist" in processed_filter:
                 processed_filter["destination_whitelist"] = [
                     Destination(destination_value) for destination_value in processed_filter["destination_whitelist"]
                 ]
-            if "destination_blacklist" in processed_filter and processed_filter["destination_blacklist"] is not None:
+            if "destination_blacklist" in processed_filter:
                 processed_filter["destination_blacklist"] = [
                     Destination(destination_value) for destination_value in processed_filter["destination_blacklist"]
                 ]
@@ -457,7 +463,11 @@ class Filter():
             # including invalid or undefined keyword arguments, and passing them to the constructor raises an Exception.
             for key, _ in processed_filter.items():
                 if key not in filter_parameters.keys() or key == "self":  # The "self" argument is not a valid keyword argument for the constructor.
-                    processed_filter.pop(key)
+                    # Keys of filter parameters are collected and popped after because popping dictionary items in the loop raises RuntimeError,
+                    # this is similar to the logic behind doing reverse loops to remove items from arrays properly.
+                    discarded_parameters.append(key)
+            for key in discarded_parameters:
+                processed_filter.pop(key)
             filters.append(cls(**processed_filter))
         return filters
 
@@ -573,7 +583,7 @@ class DetailedFilter(Filter):
         with open(file=path, mode="r", encoding="utf-8") as yaml_file:
             data = safe_load(yaml_file)  # Gets all filters, with every filter criteria from both base and detailed filter classes.
         for full_filter in data["filters"]:
-            # Classifies arguments of each class from the aggregate data.
+            # Classifies arguments of each class from the aggregate data. This leaves out invalid or undefined keyword arguments automatically.
             base_filter_arguments: dict[str, Any] = {}
             detailed_filter_arguments: dict[str, Any] = {}
             base_filter: Filter  # Required argument for the DetailedFilter constructor.
@@ -586,28 +596,28 @@ class DetailedFilter(Filter):
                     detailed_filter_arguments[key] = value
             # Whitelists and blacklists must be processed to convert values to Enum instances to make them compatible with __init__ constructors. Uses list comprehension.
             # Parses base Filter enums first, in order to create the base Filter argument required for the DetailedFilter constructor.
-            if "destination_whitelist" in base_filter_arguments and base_filter_arguments.destination_whitelist is not None:
+            if "destination_whitelist" in base_filter_arguments:
                 base_filter_arguments.destination_whitelist = [
                     Destination(destination_value) for destination_value in base_filter_arguments.destination_whitelist
                 ]
-            if "destination_blacklist" in base_filter_arguments and base_filter_arguments.destination_blacklist is not None:
+            if "destination_blacklist" in base_filter_arguments:
                 base_filter_arguments.destination_blacklist = [
                     Destination(destination_value) for destination_value in base_filter_arguments.destination_blacklist
                 ]
             base_filter = Filter(**base_filter_arguments)
-            if "housing_whitelist" in detailed_filter_arguments and detailed_filter_arguments.housing_whitelist is not None:
+            if "housing_whitelist" in detailed_filter_arguments:
                 detailed_filter_arguments.housing_whitelist = [
                     Housing(housing_value) for housing_value in detailed_filter_arguments.housing_whitelist
                 ]
-            if "housing_blacklist" in detailed_filter_arguments and detailed_filter_arguments.housing_blacklist is not None:
+            if "housing_blacklist" in detailed_filter_arguments:
                 detailed_filter_arguments.housing_blacklist = [
                     Housing(housing_value) for housing_value in detailed_filter_arguments.housing_blacklist
                 ]
-            if "occupation_type_whitelist" in detailed_filter_arguments and detailed_filter_arguments.occupation_type_whitelist is not None:
+            if "occupation_type_whitelist" in detailed_filter_arguments:
                 detailed_filter_arguments.occupation_type_whitelist = [
                     OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments.occupation_type_whitelist
                 ]
-            if "occupation_type_blacklist" in detailed_filter_arguments and detailed_filter_arguments.occupation_type_blacklist is not None:
+            if "occupation_type_blacklist" in detailed_filter_arguments:
                 detailed_filter_arguments.occupation_type_blacklist = [
                     OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments.occupation_type_blacklist
                 ]
