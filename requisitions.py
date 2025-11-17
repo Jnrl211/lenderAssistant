@@ -154,20 +154,37 @@ class Requisition():
         return True
 
 
-# TODO: keep adding members as they appear in more requisitions over time. Most I've seen at the moment are "Profesional", but there may be more for other education levels.
 class Education(IntEnum):
     """Education levels enumeration, used for ordering, categorization and comparison in `DetailedRequisition`.
 
-    Normalize collected education level strings to uppercase to create their corresponding `Education` member appropriately.
+    This is an `IntEnum` in order to allow ordinal filtering by maximum and minimum education levels,
+    though with a special method to parse `Education` enum members from label strings.
 
     Parse empty or undefined field as `UNKNOWN`.
     """
 
     UNKNOWN = 0
     TECHNICIAN = auto()  # Labeled "Técnico".
-    PROFESIONAL = auto()  # Labeled "Profesional".
+    PROFESSIONAL = auto()  # Labeled "Profesional".
     MASTERS = auto()  # Labeled "Maestría".
     PHD = auto()  # Labeled "Doctorado".
+
+    @staticmethod
+    def parse_from_label(label: str):
+        """Parses a label to its corresponding `Education` enum member. Returns `Education.UNKNOWN` on failure."""
+
+        match label:
+            case "Técnico":
+                return Education.TECHNICIAN
+            case "Profesional":
+                return Education.PROFESSIONAL
+            case "Maestría":
+                return Education.MASTERS
+            case "Doctorado":
+                return Education.PHD
+            case _:
+                # TODO: log the unknown `Education` label to a file so it can be added later.
+                return Education.UNKNOWN
 
 
 class Housing(Enum):
@@ -419,8 +436,8 @@ class Filter():
         self.minimum_loan_number = minimum_loan_number
         self.maximum_loan_number = maximum_loan_number
 
-    @classmethod
-    def parse_all_from_yaml(cls, path: str) -> list[Self]:
+    @staticmethod
+    def parse_all_from_yaml(path: str) -> list[Self]:
         """Creates a list of `Filter` objects from a YAML file.
 
         Parses a YAML file and creates a list of `Filter` objects, from the first YAML document in the file.
@@ -436,7 +453,7 @@ class Filter():
         filters: list[Self] = []
         # Gets __init__ method parameters of the class. This is a dict-like object, and it contains the "self" parameter.
         # Note that these contain the "self" argument, which is not a valid keyword argument for the constructor.
-        filter_parameters = inspect.signature(cls.__init__).parameters
+        filter_parameters = inspect.signature(Filter.__init__).parameters
         with open(file=path, mode="r", encoding="utf-8") as yaml_file:
             # "safe_load" is restricted to parsing YAML objects as native Python data types, so here they are parsed as dictionaries.
             # "load" can instantiate custom classes right away, but opens the risk of malicious code injection from untrusted YAML files.
@@ -468,7 +485,7 @@ class Filter():
                     discarded_parameters.append(key)
             for key in discarded_parameters:
                 processed_filter.pop(key)
-            filters.append(cls(**processed_filter))
+            filters.append(Filter(**processed_filter))
         return filters
 
 # TODO: additional calculated filters such as "income-expense ratio", "remaining funding amount ratio to amount ratio" and "monthly payment to free income ratio" could be added to this.
@@ -564,8 +581,8 @@ class DetailedFilter(Filter):
         self.occupation_type_whitelist = occupation_type_whitelist
         self.occupation_type_blacklist = occupation_type_blacklist
 
-    @classmethod
-    def parse_all_from_yaml(cls, path: str) -> list[Self]:
+    @staticmethod
+    def parse_all_from_yaml(path: str) -> list[Self]:
         """Creates a list of `DetailedFilter` objects from a YAML file.
 
         Parses a YAML file and creates a list of `DetailedFilter` objects, from the first YAML document in the file.
@@ -576,35 +593,26 @@ class DetailedFilter(Filter):
         """
 
         data: Any
+        base_filters: list[Filter] = Filter.parse_all_from_yaml(path=path)  # List of base filters required by `DetailedFilter` constructor.
         detailed_filters: list[Self] = []
         # Gets __init__ method parameters of each class. These are dict-like objects, and they contain the "self" parameter.
         base_filter_parameters = inspect.signature(Filter.__init__).parameters
-        detailed_filter_parameters = inspect.signature(cls.__init__).parameters
+        detailed_filter_parameters = inspect.signature(DetailedFilter.__init__).parameters
+
         with open(file=path, mode="r", encoding="utf-8") as yaml_file:
             data = safe_load(yaml_file)  # Gets all filters, with every filter criteria from both base and detailed filter classes.
-        for full_filter in data["filters"]:
+        for index, full_filter in enumerate(data["filters"]):
             # Classifies arguments of each class from the aggregate data. This leaves out invalid or undefined keyword arguments automatically.
-            base_filter_arguments: dict[str, Any] = {}
             detailed_filter_arguments: dict[str, Any] = {}
-            base_filter: Filter  # Required argument for the DetailedFilter constructor.
+            base_filter: Filter = base_filters[index]  # Pair each base filter with a detailed filter at the same index. Required argument for the DetailedFilter constructor.
             detailed_filter: Self
             for key, value in full_filter.items():
-                # Expects no shadowed attributes between these classes. Also, the "self" argument is not a valid keyword argument for the constructor.
+                # Expects no shadowed attributes. Also, the "self" argument is not a valid keyword argument for __init__, so it is ignored.
                 if key in base_filter_parameters.keys() and key != "self":
-                    base_filter_arguments[key] = value
+                    # Ignores base filter parameters because they are already collected and parsed using the super class method.
+                    pass
                 if key in detailed_filter_parameters.keys() and key != "self":
                     detailed_filter_arguments[key] = value
-            # Whitelists and blacklists must be processed to convert values to Enum instances to make them compatible with __init__ constructors. Uses list comprehension.
-            # Parses base Filter enums first, in order to create the base Filter argument required for the DetailedFilter constructor.
-            if "destination_whitelist" in base_filter_arguments:
-                base_filter_arguments.destination_whitelist = [
-                    Destination(destination_value) for destination_value in base_filter_arguments.destination_whitelist
-                ]
-            if "destination_blacklist" in base_filter_arguments:
-                base_filter_arguments.destination_blacklist = [
-                    Destination(destination_value) for destination_value in base_filter_arguments.destination_blacklist
-                ]
-            base_filter = Filter(**base_filter_arguments)
             if "housing_whitelist" in detailed_filter_arguments:
                 detailed_filter_arguments.housing_whitelist = [
                     Housing(housing_value) for housing_value in detailed_filter_arguments.housing_whitelist
@@ -621,7 +629,7 @@ class DetailedFilter(Filter):
                 detailed_filter_arguments.occupation_type_blacklist = [
                     OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments.occupation_type_blacklist
                 ]
-            detailed_filter = cls(base_filter=base_filter, **detailed_filter_arguments)
+            detailed_filter = DetailedFilter(base_filter=base_filter, **detailed_filter_arguments)
             detailed_filters.append(detailed_filter)
         return detailed_filters
 
