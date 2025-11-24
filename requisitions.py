@@ -40,11 +40,13 @@ class Grade(IntEnum):
     C7 = auto()
 
 
-# TODO: some Destination values show different labels in the requisition list and in the detailed requisition view. Requisition list labels are used here.
 class Destination(Enum):
     """Requisition destination enumeration.
 
     Indicates the alleged destination of the loan requisition, according to the requisitioner. 
+    
+    Some Destination values show different labels in the requisition list and in the detailed requisition view.
+    The values of these enum members are the labels from the requisition list.
 
     For subjective evaluation and filtering.
     """
@@ -56,6 +58,7 @@ class Destination(Enum):
     EDUCATION = "Educación"
     HOUSING = "Vivienda"
     PERSONAL_EXPENSES = "Gastos Personales"
+    OTHER = "Otros"  # Alternative label in web app filter buttons: "Otro"
 
 
 class Requisition():
@@ -234,7 +237,7 @@ class DetailedRequisition(Requisition):
     has_major_medical_insurance: bool
     has_own_vehicle: bool
     education: Education
-    state_of_residence: str  # TODO: not strictly required for evaluation, an Enum could be created for this. State of residence in Mexico.
+    state_of_residence: str  # TODO: not strictly required for evaluation, an `Enum` could be created for this. State of residence in Mexico.
     housing: Housing
     occupation: str  # Occupation as indicated by the requisitioner. TODO: this is an open value indicating the requisitioners job position. Empty string may be parsed as having an elevated risk of defaulting, unless type of employment indicates otherwise (like being a business owner or freelancer).
     tenure: int  # Number of years at the last reported occupation, as indicated by the requisitioner.
@@ -330,6 +333,10 @@ class DetailedRequisition(Requisition):
         if filter.has_major_medical_insurance is not None and filter.has_major_medical_insurance != self.has_major_medical_insurance:
             return False
         if filter.has_own_vehicle is not None and filter.has_own_vehicle != self.has_own_vehicle:
+            return False
+        if filter.minimum_education is not None and filter.minimum_education > self.education:
+            return False
+        if filter.maximum_education is not None and filter.maximum_education < self.education:
             return False
         if filter.housing_whitelist is not None:
             isWhitelisted: bool = False
@@ -513,9 +520,8 @@ class DetailedFilter(Filter):
     maximum_dependents: int | None
     has_major_medical_insurance: bool | None
     has_own_vehicle: bool | None
-    # TODO: or replace with white/black lists? To avoid having to check inconsistent/inverted enum thresholds.
-    # minimum_education: Education
-    # maximum_education: Education
+    minimum_education: Education | None
+    maximum_education: Education | None
     # TODO: replace open string argument with enum in requisitions.py, and reference it here.
     # state_of_residence_whitelist: list[str]
     # state_of_residence_blacklist: list[str]
@@ -548,6 +554,8 @@ class DetailedFilter(Filter):
         maximum_dependents: int | None = None,
         has_major_medical_insurance: bool | None = None,
         has_own_vehicle: bool | None = None,
+        minimum_education: Education | None = None,
+        maximum_education: Education | None = None,
         housing_whitelist: list[Housing] | None = None,
         housing_blacklist: list[Housing] | None = None,
         minimum_tenure: int | None = None,
@@ -574,6 +582,8 @@ class DetailedFilter(Filter):
         self.maximum_dependents = maximum_dependents
         self.has_major_medical_insurance = has_major_medical_insurance
         self.has_own_vehicle = has_own_vehicle
+        self.minimum_education = minimum_education
+        self.maximum_education = maximum_education
         self.housing_whitelist = housing_whitelist
         self.housing_blacklist = housing_blacklist
         self.minimum_tenure = minimum_tenure
@@ -613,6 +623,10 @@ class DetailedFilter(Filter):
                     pass
                 if key in detailed_filter_parameters.keys() and key != "self":
                     detailed_filter_arguments[key] = value
+            if "minimum_education" in detailed_filter_arguments:
+                detailed_filter_arguments.minimum_education = Education.parse_from_label(detailed_filter_arguments.minimum_education)
+            if "maximum_education" in detailed_filter_arguments:
+                detailed_filter_arguments.maximum_education = Education.parse_from_label(detailed_filter_arguments.maximum_education)
             if "housing_whitelist" in detailed_filter_arguments:
                 detailed_filter_arguments.housing_whitelist = [
                     Housing(housing_value) for housing_value in detailed_filter_arguments.housing_whitelist
