@@ -239,7 +239,7 @@ class DetailedRequisition(Requisition):
     education: Education
     state_of_residence: str  # TODO: not strictly required for evaluation, an `Enum` could be created for this. State of residence in Mexico.
     housing: Housing
-    occupation: str  # Occupation as indicated by the requisitioner. TODO: this is an open value indicating the requisitioners job position. Empty string may be parsed as having an elevated risk of defaulting, unless type of employment indicates otherwise (like being a business owner or freelancer).
+    occupation: str  # Occupation or job position as indicated by the requisitioner, this is and free input, not an enumeration. When undisclosed by the requisitioner, may indicate opacity and higher risk of default.
     tenure: int  # Number of years at the last reported occupation, as indicated by the requisitioner.
     occupation_type: OccupationType
 
@@ -354,6 +354,8 @@ class DetailedRequisition(Requisition):
                     break
             if isBlacklisted:
                 return False
+        if filter.is_occupation_empty is not None and filter.is_occupation_empty != (self.occupation == ""):
+            return False
         if filter.minimum_tenure is not None and filter.minimum_tenure > self.tenure:
             return False
         if filter.maximum_tenure is not None and filter.maximum_tenure < self.tenure:
@@ -527,7 +529,7 @@ class DetailedFilter(Filter):
     # state_of_residence_blacklist: list[str]
     housing_whitelist: list[Housing] | None
     housing_blacklist: list[Housing] | None
-    # occupation  # TODO: is this even filterable? It is an open string. Only if the user wanted to check whether it is empty or not. Or have it analyzed some other way.
+    is_occupation_empty: bool | None  # Checks whether the occupation field is empty, so undisclosed by the requisitioner. May indicate opacity and higher risk of default.
     minimum_tenure: int | None
     maximum_tenure: int | None
     occupation_type_whitelist: list[OccupationType]
@@ -558,6 +560,7 @@ class DetailedFilter(Filter):
         maximum_education: Education | None = None,
         housing_whitelist: list[Housing] | None = None,
         housing_blacklist: list[Housing] | None = None,
+        is_occupation_empty: bool | None = None,
         minimum_tenure: int | None = None,
         maximum_tenure: int | None = None,
         occupation_type_whitelist: list[OccupationType] | None = None,
@@ -586,6 +589,7 @@ class DetailedFilter(Filter):
         self.maximum_education = maximum_education
         self.housing_whitelist = housing_whitelist
         self.housing_blacklist = housing_blacklist
+        self.is_occupation_empty = is_occupation_empty
         self.minimum_tenure = minimum_tenure
         self.maximum_tenure = maximum_tenure
         self.occupation_type_whitelist = occupation_type_whitelist
