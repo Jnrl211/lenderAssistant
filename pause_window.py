@@ -67,7 +67,6 @@ def make_process_dpi_aware():
     
     Even though type and autocomplete hints for runtime dynamic loaders (like ctypes.windll) are unavailable, this works as intended.
     """
-
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # On Windows 8.1+
     except Exception as e:
