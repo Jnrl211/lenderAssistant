@@ -4,7 +4,7 @@
 # it is included in the eligible requisition list.
 #
 # Below are examples of valid (arbitrary) filters; put basic and detailed filter criteria together in every filter object.
-# Use YAML data types for filter criteria values, these will be parsed by to Python types at runtime.
+# Use YAML data types for filter criteria values, these will be parsed to Python types at runtime.
 #
 # You may specify as many or as little filters as you need, 
 # and you may include or exclude any filter criteria in your filters as well. All criteria are optional;
