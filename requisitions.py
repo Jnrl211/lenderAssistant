@@ -242,6 +242,7 @@ class DetailedRequisition(Requisition):
     occupation: str  # Occupation or job position as indicated by the requisitioner, this is and free input, not an enumeration. When undisclosed by the requisitioner, may indicate opacity and higher risk of default.
     tenure: int  # Number of years at the last reported occupation, as indicated by the requisitioner.
     occupation_type: OccupationType
+    is_platform_in_shareholder_list: bool
 
     def __init__(
         self, 
@@ -261,7 +262,8 @@ class DetailedRequisition(Requisition):
         housing: Housing,
         occupation: str,
         tenure: int,
-        occupation_type: OccupationType
+        occupation_type: OccupationType,
+        is_platform_in_shareholder_list: bool
     ):
         super().__init__(**base_requisition.__dict__)  # Passed as `dict` so it can be unpacked.
         self.monthly_payment = monthly_payment
@@ -280,6 +282,7 @@ class DetailedRequisition(Requisition):
         self.occupation = occupation
         self.tenure = tenure
         self.occupation_type = occupation_type
+        self.is_platform_in_shareholder_list = is_platform_in_shareholder_list
 
     def meets_filter(self, filter: Filter | DetailedFilter) -> bool:
         """Applies a `Filter` or `DetailedFilter` to a `DetailedRequisition` and returns whether the requisition meets the filter's criteria.
@@ -376,6 +379,8 @@ class DetailedRequisition(Requisition):
                     break
             if isBlacklisted:
                 return False
+        if filter.is_platform_in_shareholder_list is not None and filter.is_platform_in_shareholder_list != self.is_platform_in_shareholder_list:
+            return False
         return True
 
 
@@ -534,6 +539,7 @@ class DetailedFilter(Filter):
     maximum_tenure: int | None
     occupation_type_whitelist: list[OccupationType]
     occupation_type_blacklist: list[OccupationType]
+    is_platform_in_shareholder_list: bool | None
 
     def __init__(
         self,
@@ -564,7 +570,8 @@ class DetailedFilter(Filter):
         minimum_tenure: int | None = None,
         maximum_tenure: int | None = None,
         occupation_type_whitelist: list[OccupationType] | None = None,
-        occupation_type_blacklist: list[OccupationType] | None = None
+        occupation_type_blacklist: list[OccupationType] | None = None,
+        is_platform_in_shareholder_list: bool | None = None
     ):
         super().__init__(**base_filter.__dict__)  # Passed as `dict` so it can be unpacked.
         self.minimum_monthly_payment = minimum_monthly_payment
@@ -594,6 +601,7 @@ class DetailedFilter(Filter):
         self.maximum_tenure = maximum_tenure
         self.occupation_type_whitelist = occupation_type_whitelist
         self.occupation_type_blacklist = occupation_type_blacklist
+        self.is_platform_in_shareholder_list = is_platform_in_shareholder_list
 
     @staticmethod
     def parse_all_from_yaml(path: str) -> list[Self]:
