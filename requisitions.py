@@ -219,7 +219,7 @@ class OccupationType(Enum):
 
 
 class DetailedRequisition(Requisition):
-    """A `DetailedRequisiton` represents a fully detailed requisition, contains all information about a requisition collected from the individual requisition page.
+    """A `DetailedRequisition` represents a fully detailed requisition, contains all information about a requisition collected from the individual requisition page.
 
     Contains further information for credit analysis, including some demographics about the applicant (a.k.a. the requisitioner) as well as income and credit history details.
 
@@ -239,7 +239,7 @@ class DetailedRequisition(Requisition):
     education: Education
     state_of_residence: str  # TODO: not strictly required for evaluation, an `Enum` could be created for this. State of residence in Mexico.
     housing: Housing
-    occupation: str  # Occupation or job position as indicated by the requisitioner, this is and free input, not an enumeration. When undisclosed by the requisitioner, may indicate opacity and higher risk of default.
+    occupation: str  # Occupation or job position as indicated by the requisitioner, this is a free input, not an enumeration. When undisclosed by the requisitioner, may indicate opacity and higher risk of default.
     tenure: int  # Number of years at the last reported occupation, as indicated by the requisitioner.
     occupation_type: OccupationType
     is_platform_in_shareholder_list: bool
