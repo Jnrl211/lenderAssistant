@@ -502,6 +502,7 @@ class Filter():
             filters.append(Filter(**processed_filter))
         return filters
 
+
 # TODO: additional calculated filters such as "income-expense ratio", "remaining funding amount ratio to amount ratio" and "monthly payment to free income ratio" could be added to this.
 class DetailedFilter(Filter):
     """A `DetailedFilter` represents a full set of detailed filter criteria for a `Requisition`.
@@ -636,24 +637,24 @@ class DetailedFilter(Filter):
                 if key in detailed_filter_parameters.keys() and key != "self":
                     detailed_filter_arguments[key] = value
             if "minimum_education" in detailed_filter_arguments:
-                detailed_filter_arguments.minimum_education = Education.parse_from_label(detailed_filter_arguments.minimum_education)
+                detailed_filter_arguments["minimum_education"] = Education.parse_from_label(detailed_filter_arguments["minimum_education"])
             if "maximum_education" in detailed_filter_arguments:
-                detailed_filter_arguments.maximum_education = Education.parse_from_label(detailed_filter_arguments.maximum_education)
+                detailed_filter_arguments["maximum_education"] = Education.parse_from_label(detailed_filter_arguments["maximum_education"])
             if "housing_whitelist" in detailed_filter_arguments:
-                detailed_filter_arguments.housing_whitelist = [
-                    Housing(housing_value) for housing_value in detailed_filter_arguments.housing_whitelist
+                detailed_filter_arguments["housing_whitelist"] = [
+                    Housing(housing_value) for housing_value in detailed_filter_arguments["housing_whitelist"]
                 ]
             if "housing_blacklist" in detailed_filter_arguments:
-                detailed_filter_arguments.housing_blacklist = [
-                    Housing(housing_value) for housing_value in detailed_filter_arguments.housing_blacklist
+                detailed_filter_arguments["housing_blacklist"] = [
+                    Housing(housing_value) for housing_value in detailed_filter_arguments["housing_blacklist"]
                 ]
             if "occupation_type_whitelist" in detailed_filter_arguments:
-                detailed_filter_arguments.occupation_type_whitelist = [
-                    OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments.occupation_type_whitelist
+                detailed_filter_arguments["occupation_type_whitelist"] = [
+                    OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments["occupation_type_whitelist"]
                 ]
             if "occupation_type_blacklist" in detailed_filter_arguments:
-                detailed_filter_arguments.occupation_type_blacklist = [
-                    OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments.occupation_type_blacklist
+                detailed_filter_arguments["occupation_type_blacklist"] = [
+                    OccupationType(occupation_type_value) for occupation_type_value in detailed_filter_arguments["occupation_type_blacklist"]
                 ]
             detailed_filter = DetailedFilter(base_filter=base_filter, **detailed_filter_arguments)
             detailed_filters.append(detailed_filter)
