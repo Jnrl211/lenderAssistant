@@ -107,18 +107,18 @@ def log_in(page: Page, manual_password: Optional[str] = None):
     page.wait_for_selector("#email")
     page.click("#email")
     page.fill("#email", ACCOUNT_EMAIL)
-    time.sleep(randint(5, 10))  # Cooldown to avoid detection.
+    time.sleep(randint(3, 5))  # Cooldown to avoid detection.
     page.wait_for_selector("//*[@id='email']/parent::*/parent::form/button[@type='submit'][last()]")
     page.click("//*[@id='email']/parent::*/parent::form/button[@type='submit'][last()]")
-    time.sleep(randint(5, 10))  # Cooldown to avoid detection.
+    time.sleep(randint(3, 5))  # Cooldown to avoid detection.
     page.click("#password")
     page.fill("#password", ACCOUNT_PASSWORD)
     if manual_password is not None:
         page.fill("#password", manual_password)
-    time.sleep(randint(5, 10))  # Cooldown to avoid detection.
+    time.sleep(randint(3, 5))  # Cooldown to avoid detection.
     page.wait_for_selector("//*[@id='password']/parent::*/parent::form/button[@type='submit'][last()]")
     page.click("//*[@id='password']/parent::*/parent::form/button[@type='submit'][last()]")
-    time.sleep(randint(5, 10))  # Cooldown to avoid detection.
+    time.sleep(randint(3, 5))  # Cooldown to avoid detection.
     # Waits until the requisition table is found, raise exception if not found.
     page.wait_for_selector("#requisitions")
 
@@ -177,13 +177,13 @@ def fetch_basic_requisition_list(page: Page) -> list[Requisition]:
         # Log requisition data in order.
         logger.debug("- ID: %s", requisition_id)
         logger.debug("- URL: %s", requisition_url)
-        logger.debug("- Grade: %s", grade)
-        logger.debug("- Interest rate: %s%%", interest_rate * 100)
+        logger.debug("- Grade: %s", grade.name)
+        logger.debug("- Interest rate: %,.2f%%", interest_rate * 100)
         logger.debug("- Score: %s", score)
         logger.debug("- Destination: %s", destination.value)
         logger.debug("- Term: %s months", term)
-        logger.debug("- Amount: %s MXN", amount)
-        logger.debug("- Remaining funding amount: %s MXN", remaining_funding_amount)
+        logger.debug("- Amount: %,.2f MXN", amount)
+        logger.debug("- Remaining funding amount: %,.2f MXN", remaining_funding_amount)
         logger.debug("- Loan number: %s", loan_number)
 
         requisition = Requisition(
@@ -315,6 +315,7 @@ def fetch_requisition_details(context: BrowserContext, requisition: Requisition)
     # Wait for the shareholders tab to appear,
     # this is done because the note loads in the DOM only after clicking the shareholders tab.
     new_page.wait_for_selector(".react-tabs > ul > li:nth-child(2)")
+    time.sleep(randint(3, 5))  # Cooldown to avoid detection.
     new_page.click(".react-tabs > ul > li:nth-child(2)")
     # Wait for the "risk share by platform" note to appear.
     # The timeout is set to something short, because the note should appear almost immediately when present.
@@ -344,19 +345,19 @@ def fetch_requisition_details(context: BrowserContext, requisition: Requisition)
     logger.debug("- Dependents: %s", dependents)
     logger.debug("- Has major medical insurance: %s", has_major_medical_insurance)
     logger.debug("- Has own vehicle: %s", has_own_vehicle)
-    logger.debug("- Education: %s", education.name)
+    logger.debug("- Education: %s", education.name.capitalize().replace("_", " "))
     logger.debug("- State of residence: %s", state_of_residence)
-    logger.debug("- Housing: %s", housing.name)
+    logger.debug("- Housing: %s", housing.name.capitalize().replace("_", " "))
     logger.debug("- Occupation (may be empty string): %s", occupation)
     logger.debug("- Tenure (years): %s", tenure)
-    logger.debug("- Occupation type: %s", occupation_type.name)
+    logger.debug("- Occupation type: %s", occupation_type.name.capitalize().replace("_", " "))
     logger.debug("  [  Shareholder list data  ]")
     logger.debug("- Is platform in shareholder list: %s", is_platform_in_shareholder_list)
 
     # Cooldown before and after closing the page to avoid bot detection, and do browser cleanup.
-    time.sleep(randint(5, 10))
+    time.sleep(randint(10, 20))
     new_page.close()
-    time.sleep(randint(5, 10))
+    time.sleep(randint(10, 20))
 
     return DetailedRequisition(
         base_requisition=requisition,
@@ -491,7 +492,7 @@ def send_eligible_requisition_list_email(requisitions: list[DetailedRequisition]
                     <li><strong>ID:</strong> {requisition.id}</li>
                     <li><strong>URL:</strong> {requisition.url}</li>
                     <li><strong>Grade:</strong> {requisition.grade.name}</li>
-                    <li><strong>Interest rate:</strong> {requisition.interest_rate * 100}%</li>
+                    <li><strong>Interest rate:</strong> {requisition.interest_rate * 100:,.2f}%</li>
                     <li><strong>Score:</strong> {requisition.score}</li>
                     <li><strong>Destination:</strong> {requisition.destination.value}</li>
                     <li><strong>Term:</strong> {requisition.term} months</li>
@@ -508,12 +509,12 @@ def send_eligible_requisition_list_email(requisitions: list[DetailedRequisition]
                     <li><strong>Dependents:</strong> {requisition.dependents}</li>
                     <li><strong>Has major medical insurance:</strong> {"Yes" if requisition.has_major_medical_insurance else "No"}</li>
                     <li><strong>Has own vehicle:</strong> {"Yes" if requisition.has_own_vehicle else "No"}</li>
-                    <li><strong>Education:</strong> {requisition.education.name.capitalize()}</li>
+                    <li><strong>Education:</strong> {requisition.education.name.capitalize().replace("_", " ")}</li>
                     <li><strong>State of residence:</strong> {requisition.state_of_residence}</li>
-                    <li><strong>Housing:</strong> {requisition.housing.name.capitalize()}</li>
+                    <li><strong>Housing:</strong> {requisition.housing.name.capitalize().replace("_", " ")}</li>
                     <li><strong>Occupation:</strong> {requisition.occupation}</li>
                     <li><strong>Tenure:</strong> {requisition.tenure} years</li>
-                    <li><strong>Occupation type:</strong> {requisition.occupation_type.name.capitalize()}</li>
+                    <li><strong>Occupation type:</strong> {requisition.occupation_type.name.capitalize().replace("_", " ")}</li>
                     <li><strong>Is platform in shareholder list:</strong> {shareholder_label}</li>
                 </ul>
             </li>
@@ -690,13 +691,13 @@ if __name__ == "__main__":
     for requisition in filtered_requisitions:
         logger.debug("- ID: %s", requisition.id)
         logger.debug("- URL: %s", requisition.url)
-        logger.debug("- Grade: %s", requisition.grade)
-        logger.debug("- Interest rate: %s%%", requisition.interest_rate)
+        logger.debug("- Grade: %s", requisition.grade.name)
+        logger.debug("- Interest rate: %,.2f%%", requisition.interest_rate * 100)
         logger.debug("- Score: %s", requisition.score)
         logger.debug("- Destination: %s", requisition.destination.value)
         logger.debug("- Term: %s months", requisition.term)
-        logger.debug("- Amount: %s MXN", requisition.amount)
-        logger.debug("- Remaining funding amount: %s MXN", requisition.remaining_funding_amount)
+        logger.debug("- Amount: %,.2f MXN", requisition.amount)
+        logger.debug("- Remaining funding amount: %,.2f MXN", requisition.remaining_funding_amount)
         logger.debug("- Loan number: %s", requisition.loan_number)
     logger.info("Filtered the requisition list with basic filters successfully.")
 
